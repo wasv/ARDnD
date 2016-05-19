@@ -18,7 +18,7 @@
 #include <fstream>
 #include <streambuf>
 
-#include "sobjhelper.hpp"
+#include "glhelper.hpp"
 #include "cvhelper.hpp"
 #include "verts.hpp"
 #include "shaders.h"
@@ -148,10 +148,10 @@ int main()
     glGenBuffers(1, &axis_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
 
-    vector<Vert<float, 6>> objVertices;
+    vector<Vert<float, 8>> objVertices;
     int obj_length;
-    load_sobj("object.sobj", objVertices);
-    glBufferData(GL_ARRAY_BUFFER, objVertices.size() * sizeof(Vert<float, 6>),
+    loadOBJ("object.obj", objVertices);
+    glBufferData(GL_ARRAY_BUFFER, objVertices.size() * sizeof(Vert<float, 8>),
                                   &objVertices[0], GL_STATIC_DRAW);
     obj_length = objVertices.size();
 
@@ -270,12 +270,12 @@ int main()
     GLint cvpAttrib = glGetAttribLocation(colorShaderProgram, "position");
     glEnableVertexAttribArray(cvpAttrib);
     glVertexAttribPointer(cvpAttrib, 3, GL_FLOAT, GL_FALSE,
-                 6*sizeof(GLfloat), 0);
+                 8*sizeof(GLfloat), 0);
 
     GLint cvcAttrib = glGetAttribLocation(colorShaderProgram, "v_color");
     glEnableVertexAttribArray(cvcAttrib);
     glVertexAttribPointer(cvcAttrib, 3, GL_FLOAT, GL_FALSE,
-                 6*sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
+                 8*sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
 
     // Make pretty shader program.
     GLuint prettyShaderProgram = glCreateProgram();

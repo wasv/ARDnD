@@ -30,7 +30,7 @@ void loadOBJ(string path, vector<Vert<float, 8>> & out_vert) {
     vector<Vert<float, 3>> tmp_vert;
     vector<Vert<float, 2>> tmp_uv;
     vector<Vert<float, 3>> tmp_norm;
-    vector<Vert<int, 3>> tmp_index;
+    vector<Vert<int, 9>> tmp_index;
     string line;
 
     while(!in_file.eof()) {
@@ -47,13 +47,13 @@ void loadOBJ(string path, vector<Vert<float, 8>> & out_vert) {
 
           tmp_vert.push_back(data);
 
-        } else if(header.compare("vf" == 0) {
+        } else if(header.compare("vf") == 0) {
           Vert<float, 2> data;
           sscanf(line.c_str(), "vf %f %f", &data[0], &data[1], &data[2]);
 
           tmp_uv.push_back(data);
 
-        } else if(header.compare("vt" == 0) {
+        } else if(header.compare("vt") == 0) {
           Vert<float, 3> data;
           sscanf(line.c_str(), "vt %f %f %f", &data[0], &data[1], &data[2]);
 
@@ -69,7 +69,7 @@ void loadOBJ(string path, vector<Vert<float, 8>> & out_vert) {
               &index[3], &index[4], &index[5],
               &index[6], &index[7], &index[8]);
           if(ret!=9) {
-            ret = sscanf(line.c_str(), "f %d//%d %d//%d %d//%d\n"
+            ret = sscanf(line.c_str(), "f %d//%d %d//%d %d//%d\n",
                 &index[0], &index[2],
                 &index[3], &index[5],
                 &index[6], &index[8]);
@@ -98,24 +98,24 @@ void loadOBJ(string path, vector<Vert<float, 8>> & out_vert) {
       for(int p = 0; p < 3; p++) {
         Vert<float, 8> vertex;
         if(tmp_index[i][(p*3)] != -1) {
-          vertex[0] = tmp_vert[ tmp_index[i][(p*3)] ];
-          vertex[1] = tmp_vert[ tmp_index[i][(p*3)] ];
-          vertex[2] = tmp_vert[ tmp_index[i][(p*3)] ];
+          vertex[0] = tmp_vert[ tmp_index[i][(p*3)]-1 ][0];
+          vertex[1] = tmp_vert[ tmp_index[i][(p*3)]-1 ][1];
+          vertex[2] = tmp_vert[ tmp_index[i][(p*3)]-1 ][2];
         } else {
           cerr << "Indexing failed" << endl;
           return;
         }
         if(tmp_index[i][(p*3)+1] != -1) {
-          vertex[3] = tmp_uv[ tmp_index[i][(p*3)+1] ];
-          vertex[4] = tmp_uv[ tmp_index[i][(p*3)+1] ];
+          vertex[3] = tmp_uv[ tmp_index[i][(p*3)+1]-1 ][0];
+          vertex[4] = tmp_uv[ tmp_index[i][(p*3)+1]-1 ][1];
         } else {
           vertex[3] = 0.0f;
           vertex[4] = 0.0f;
         }
         if(tmp_index[i][(p*3)+1] != -1) {
-          vertex[5] = tmp_norm[ tmp_index[i][(p*3)+2] ];
-          vertex[6] = tmp_norm[ tmp_index[i][(p*3)+2] ];
-          vertex[7] = tmp_norm[ tmp_index[i][(p*3)+2] ];
+          vertex[5] = tmp_norm[ tmp_index[i][(p*3)+2]-1 ][0];
+          vertex[6] = tmp_norm[ tmp_index[i][(p*3)+2]-1 ][1];
+          vertex[7] = tmp_norm[ tmp_index[i][(p*3)+2]-1 ][2];
         } else {
           vertex[5] = 0.0f;
           vertex[6] = 0.0f;
@@ -123,12 +123,13 @@ void loadOBJ(string path, vector<Vert<float, 8>> & out_vert) {
         }
         out_vert.push_back(vertex);
       }
+    }
     in_file.close();
   }
   else cerr << "Error opening the input or output file" << endl;
 }
 
-void makeShader(const char *vSource, const cahr *fSource, GLuint & shaderId) {
+int makeShader(const char *vSource, const char *fSource, GLuint & shaderId) {
     // Compile vertex shader
     GLuint vertId = glCreateShader(GL_VERTEX_SHADER);
 
@@ -164,4 +165,5 @@ void makeShader(const char *vSource, const cahr *fSource, GLuint & shaderId) {
     glBindFragDataLocation(shaderId, 0, "outColor");
     glLinkProgram(shaderId);
     glUseProgram(shaderId);
+    return 0;
 }
