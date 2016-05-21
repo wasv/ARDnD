@@ -138,6 +138,7 @@ int main()
                                   backdrop_vert, GL_STATIC_DRAW);
     
     glBindVertexArray(0);
+   
     // Create Axis Vertex Array Object
     GLuint axis_vao;
     glGenVertexArrays(1, &axis_vao);
@@ -147,7 +148,7 @@ int main()
     GLuint axis_vbo;
     glGenBuffers(1, &axis_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
-
+    
     vector<Vert<float, 8>> objVertices;
     int obj_length;
     loadOBJ("object.obj", objVertices);
@@ -155,139 +156,35 @@ int main()
                                   &objVertices[0], GL_STATIC_DRAW);
     obj_length = objVertices.size();
 
-    // Compile color vertex shader
-    GLuint colorVert = glCreateShader(GL_VERTEX_SHADER);
-    //const char *cvSource = readFile("3dvert.glsl").c_str();
-    const char *cvSource = SHADER_VERT3D_COLOR;
-
-    glShaderSource(colorVert, 1, &cvSource, NULL);
-    glCompileShader(colorVert);
-    GLint cvStatus;
-    glGetShaderiv(colorVert, GL_COMPILE_STATUS, &cvStatus);
-    if(cvStatus != GL_TRUE) {
-        char buffer[512];
-        glGetShaderInfoLog(colorVert, 512, NULL, buffer);
-        std::cerr << buffer << std::endl;
-        return 1;
-    }
-
-    // Compile color fragment shader
-    GLuint colorFrag = glCreateShader(GL_FRAGMENT_SHADER);
-    //const char* cfSource = readFile("colorfrag.glsl").c_str();
-    const char *cfSource = SHADER_FRAG_COLOR;
-
-    glShaderSource(colorFrag, 1, &cfSource, NULL);
-    glCompileShader(colorFrag);
-    GLint cfStatus;
-    glGetShaderiv(colorFrag, GL_COMPILE_STATUS, &cfStatus);
-    if(cfStatus != GL_TRUE) {
-        char buffer[512];
-        glGetShaderInfoLog(colorFrag, 512, NULL, buffer);
-        std::cerr << buffer << std::endl;
-        return 2;
-    }
-
-    // Compile pretty vertex shader
-    GLuint prettyVert = glCreateShader(GL_VERTEX_SHADER);
-    //const char *pvSource = readFile("3dvert.glsl").c_str();
-    const char *pvSource = SHADER_VERT3D;
-
-    glShaderSource(prettyVert, 1, &pvSource, NULL);
-    glCompileShader(prettyVert);
-    GLint pvStatus;
-    glGetShaderiv(prettyVert, GL_COMPILE_STATUS, &pvStatus);
-    if(pvStatus != GL_TRUE) {
-        char buffer[512];
-        glGetShaderInfoLog(prettyVert, 512, NULL, buffer);
-        std::cerr << buffer << std::endl;
-        return 3;
-    }
-
-    // Compile pretty fragment shader
-    GLuint prettyFrag = glCreateShader(GL_FRAGMENT_SHADER);
-    //const char* pfSource = readFile("prettyfrag.glsl").c_str();
-    const char* pfSource = SHADER_FRAG_PRETTY;
-
-    glShaderSource(prettyFrag, 1, &pfSource, NULL);
-    glCompileShader(prettyFrag);
-    GLint pfStatus;
-    glGetShaderiv(prettyFrag, GL_COMPILE_STATUS, &pfStatus);
-    if(pfStatus != GL_TRUE) {
-        char buffer[512];
-        glGetShaderInfoLog(prettyFrag, 512, NULL, buffer);
-        std::cerr << buffer << std::endl;
-        return 4;
-    }
-
-    // Compile blank vertex shader
-    GLuint blankVert = glCreateShader(GL_VERTEX_SHADER);
-    //const char *bvSource = readFile("3dvert.glsl").c_str();
-    const char *bvSource = SHADER_VERT3D;
-
-    glShaderSource(blankVert, 1, &bvSource, NULL);
-    glCompileShader(blankVert);
-    GLint bvStatus;
-    glGetShaderiv(blankVert, GL_COMPILE_STATUS, &bvStatus);
-    if(bvStatus != GL_TRUE) {
-        char buffer[512];
-        glGetShaderInfoLog(blankVert, 512, NULL, buffer);
-        std::cerr << buffer << std::endl;
-        return 5;
-    }
-
-    // Compile blank fragment shader
-    GLuint blankFrag = glCreateShader(GL_FRAGMENT_SHADER);
-    //const char* bfSource = readFile("simplefrag.glsl").c_str();
-    const char* bfSource = SHADER_FRAG_SIMPLE;
-
-    glShaderSource(blankFrag, 1, &bfSource, NULL);
-    glCompileShader(blankFrag);
-    GLint bfStatus;
-    glGetShaderiv(blankFrag, GL_COMPILE_STATUS, &bfStatus);
-    if(bfStatus != GL_TRUE) {
-        char buffer[512];
-        glGetShaderInfoLog(blankFrag, 512, NULL, buffer);
-        std::cerr << buffer << std::endl;
-        return 6;
-    }
-
-    // Make color shader program.
-    GLuint colorShaderProgram = glCreateProgram();
-    glAttachShader(colorShaderProgram, colorVert);
-    glAttachShader(colorShaderProgram, colorFrag);
-    glBindFragDataLocation(colorShaderProgram, 0, "outColor");
-    glLinkProgram(colorShaderProgram);
-    glUseProgram(colorShaderProgram);
-    
-
-    //GLint ctAttrib = glGetAttribLocation(colorShaderProgram, "texcoord`");
-    //glEnableVertexAttribArray(ctAttrib);
-    //glVertexAttribPointer(ctAttrib, 3, GL_FLOAT, GL_FALSE,
-    //            6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+    // Make object shader program.
+    GLuint colorShaderProgram;
+    makeShader(SHADER_VERT3D, SHADER_FRAG_SIMPLE, colorShaderProgram);
     
     glBindVertexArray(axis_vao);
     glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
+
     GLint cvpAttrib = glGetAttribLocation(colorShaderProgram, "position");
     glEnableVertexAttribArray(cvpAttrib);
     glVertexAttribPointer(cvpAttrib, 3, GL_FLOAT, GL_FALSE,
-                 8*sizeof(GLfloat), 0);
+                 8*sizeof(float), 0);
 
-    GLint cvcAttrib = glGetAttribLocation(colorShaderProgram, "v_color");
+    GLint cvcAttrib = glGetAttribLocation(colorShaderProgram, "texcoord");
     glEnableVertexAttribArray(cvcAttrib);
-    glVertexAttribPointer(cvcAttrib, 3, GL_FLOAT, GL_FALSE,
-                 8*sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
+    glVertexAttribPointer(cvcAttrib, 2, GL_FLOAT, GL_FALSE,
+                 8*sizeof(float), (void*)(3*sizeof(float)));
 
-    // Make pretty shader program.
-    GLuint prettyShaderProgram = glCreateProgram();
-    glAttachShader(prettyShaderProgram, prettyVert);
-    glAttachShader(prettyShaderProgram, prettyFrag);
-    glBindFragDataLocation(prettyShaderProgram, 0, "outColor");
-    glLinkProgram(prettyShaderProgram);
-    glUseProgram(prettyShaderProgram);
+    GLint cvnAttrib = glGetAttribLocation(colorShaderProgram, "normal");
+    glEnableVertexAttribArray(cvnAttrib);
+    glVertexAttribPointer(cvnAttrib, 3, GL_FLOAT, GL_FALSE,
+                 8*sizeof(float), (void*)(5*sizeof(float)));
     
-
+    // Make 'pretty' backdrop shader program.
+    GLuint prettyShaderProgram;
+    makeShader(SHADER_VERT3D, SHADER_FRAG_PRETTY, prettyShaderProgram);
+    
     glBindVertexArray(bd_vao);
     glBindBuffer(GL_ARRAY_BUFFER, bd_vbo);
+
     GLint pvpAttrib = glGetAttribLocation(prettyShaderProgram, "position");
     glEnableVertexAttribArray(pvpAttrib);
     glVertexAttribPointer(pvpAttrib, 3, GL_FLOAT, GL_FALSE,
@@ -298,16 +195,13 @@ int main()
     glVertexAttribPointer(pvtAttrib, 2, GL_FLOAT, GL_FALSE,
                 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 
-    // Make blank shader program.
-    GLuint blankShaderProgram = glCreateProgram();
-    glAttachShader(blankShaderProgram, blankVert);
-    glAttachShader(blankShaderProgram, blankFrag);
-    glBindFragDataLocation(blankShaderProgram, 0, "outColor");
-    glLinkProgram(blankShaderProgram);
-    glUseProgram(blankShaderProgram);
+    // Make simple backdrop shader program.
+    GLuint blankShaderProgram;
+    makeShader(SHADER_VERT3D, SHADER_FRAG_SIMPLE, blankShaderProgram);
 
     glBindVertexArray(bb_vao);
     glBindBuffer(GL_ARRAY_BUFFER, bb_vbo);
+
     GLint bvpAttrib = glGetAttribLocation(blankShaderProgram, "position");
     glEnableVertexAttribArray(bvpAttrib);
     glVertexAttribPointer(bvpAttrib, 3, GL_FLOAT, GL_FALSE,
@@ -472,15 +366,6 @@ int main()
     glDeleteProgram(prettyShaderProgram);
     glDeleteProgram(blankShaderProgram);
     
-    glDeleteShader(colorFrag);
-    glDeleteShader(colorVert);
-
-    glDeleteShader(prettyFrag);
-    glDeleteShader(prettyVert);
-
-    glDeleteShader(blankVert);
-    glDeleteShader(blankFrag);
-
     glDeleteBuffers(1, &axis_vbo);
     glDeleteBuffers(1, &bd_vbo);
     glDeleteBuffers(1, &bb_vbo);
