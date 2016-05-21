@@ -51,6 +51,10 @@ float axis_vertices[] = {
 cv::Mat cameraFrame;
 cv::VideoCapture stream1;
 
+#ifdef STATIC_IMAGES
+bool updated = true;
+#endif
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if(action == GLFW_PRESS ){
@@ -70,6 +74,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if( cameraFrame.empty() ) {
          exit(0);
         }
+        updated = true;
     #endif
     }
 }
@@ -188,12 +193,12 @@ int main()
     GLint pvpAttrib = glGetAttribLocation(prettyShaderProgram, "position");
     glEnableVertexAttribArray(pvpAttrib);
     glVertexAttribPointer(pvpAttrib, 3, GL_FLOAT, GL_FALSE,
-                 5*sizeof(GLfloat), 0);
+               5*sizeof(float), 0);
 
     GLint pvtAttrib = glGetAttribLocation(prettyShaderProgram, "texcoord");
     glEnableVertexAttribArray(pvtAttrib);
     glVertexAttribPointer(pvtAttrib, 2, GL_FLOAT, GL_FALSE,
-                5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+               5*sizeof(float), (void*)(3 * sizeof(float)));
 
     // Make simple backdrop shader program.
     GLuint blankShaderProgram;
@@ -205,12 +210,12 @@ int main()
     GLint bvpAttrib = glGetAttribLocation(blankShaderProgram, "position");
     glEnableVertexAttribArray(bvpAttrib);
     glVertexAttribPointer(bvpAttrib, 3, GL_FLOAT, GL_FALSE,
-                 5*sizeof(GLfloat), 0);
+               5*sizeof(float), 0);
 
     GLint bvtAttrib = glGetAttribLocation(blankShaderProgram, "texcoord");
     glEnableVertexAttribArray(bvtAttrib);
     glVertexAttribPointer(bvtAttrib, 2, GL_FLOAT, GL_FALSE,
-                5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+               5*sizeof(float), (void*)(3 * sizeof(float)));
 
     // Setup view
     glm::mat4 view = glm::lookAt(
@@ -261,6 +266,18 @@ int main()
     // --- Main Loop ---
     while(!glfwWindowShouldClose(window))
     {
+        // Check for Keypress
+        glfwPollEvents();
+
+        #ifndef STATIC_IMAGES
+        // Capture Image
+        stream1 >> cameraFrame;
+        if( cameraFrame.empty() ) break;
+        #else
+        if(!updated) continue;
+        updated = false;
+        #endif
+
         // Reset
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -272,12 +289,6 @@ int main()
         //view = glm::lookAt(glm::vec3(camX,camY,1.5f),
         //        glm::vec3(0.0f, 0.0f, 0.0f),
         //        glm::vec3(0.0f, 0.0f, 1.0f));
-
-        #ifndef STATIC_IMAGES
-        // Capture Image
-        stream1 >> cameraFrame;
-        if( cameraFrame.empty() ) break;
-        #endif
 
         // Clone Image
         cv::Mat processedFrame = cameraFrame.clone();
@@ -357,7 +368,6 @@ int main()
         
         //Display
         glfwSwapBuffers(window);
-        glfwPollEvents();
         frame_num++;
     }
 
