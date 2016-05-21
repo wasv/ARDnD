@@ -144,12 +144,12 @@ int main()
     
     glBindVertexArray(0);
    
-    // Create Axis Vertex Array Object
+    // Create Object Vertex Array Object
     GLuint axis_vao;
     glGenVertexArrays(1, &axis_vao);
     glBindVertexArray(axis_vao);
 
-    // Create Axis Vertex Buffer Object
+    // Create Object Vertex Buffer Object
     GLuint axis_vbo;
     glGenBuffers(1, &axis_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
@@ -160,6 +160,11 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, objVertices.size() * sizeof(Vert<float, 8>),
                                   &objVertices[0], GL_STATIC_DRAW);
     obj_length = objVertices.size();
+
+    // Read object texutre
+    int obj_tex_width, obj_tex_height;
+    unsigned char* obj_texture =
+      SOIL_load_image("tex.png", &obj_tex_width, &obj_tex_height, 0, SOIL_LOAD_RGB);
 
     // Make object shader program.
     GLuint colorShaderProgram;
@@ -352,6 +357,11 @@ int main()
           model = glm::translate(model, glm::vec3(poses[i][0], poses[i][1], 0.0f));
           model = glm::rotate(model, poses[i][2], glm::vec3(0.0f, 0.0f, 1.0f));
           model = glm::scale(model, glm::vec3(poses[i][3]));
+
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                        obj_tex_width, obj_tex_height, 0, GL_BGR,
+                        GL_UNSIGNED_BYTE, obj_texture);
+          glGenerateMipmap(GL_TEXTURE_2D);
 
           glUseProgram(colorShaderProgram);
           glUniformMatrix4fv(glGetUniformLocation(colorShaderProgram, "view"),

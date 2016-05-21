@@ -47,15 +47,15 @@ void loadOBJ(string path, vector<Vert<float, 8>> & out_vert) {
 
           tmp_vert.push_back(data);
 
-        } else if(header.compare("vf") == 0) {
+        } else if(header.compare("vt") == 0) {
           Vert<float, 2> data;
-          sscanf(line.c_str(), "vf %f %f", &data[0], &data[1], &data[2]);
+          sscanf(line.c_str(), "vt %f %f", &data[0], &data[1]);
 
           tmp_uv.push_back(data);
 
-        } else if(header.compare("vt") == 0) {
+        } else if(header.compare("vn") == 0) {
           Vert<float, 3> data;
-          sscanf(line.c_str(), "vt %f %f %f", &data[0], &data[1], &data[2]);
+          sscanf(line.c_str(), "vn %f %f %f", &data[0], &data[1], &data[2]);
 
           tmp_norm.push_back(data);
 
