@@ -11,7 +11,7 @@ An augmented reality tabletop using OpenGL and OpenCV.
 A build for rendering frames from a folder of sample images is currently available under the GitHub releases section.
 
 ## Screenshot
-![Screenshot](https://raw.githubusercontent.com/wastevensv/ARDnD/master/screenshot.png?token=ABMgCQ8jK4b5XpNzAdJBHwRp9bFcPj6Cks5XSu_rwA%3D%3D)
+![Screenshot](https://raw.githubusercontent.com/wastevensv/ARDnD/master/screenshot.png)
 
 ## Dependencies
 * OpenCV
