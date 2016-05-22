@@ -52,7 +52,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	(
 		filename,
 		SOIL_SAVE_TYPE_BMP,
-		0, 0, 800, 600
+		0, 0, 1024, 768
 	);
       }
     #ifdef STATIC_IMAGES
@@ -91,7 +91,7 @@ int main()
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
     // --- Create window ---
-    GLFWwindow* window = glfwCreateWindow(800, 600,
+    GLFWwindow* window = glfwCreateWindow(1024, 768,
                                       "OpenGL", nullptr, nullptr); // Windowed
     if(window == NULL) return 2;
     glfwMakeContextCurrent(window);
@@ -195,9 +195,9 @@ int main()
           glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 1.0f, 10.0f);
     glm::mat4 model = glm::mat4();
 
-    glUniform3fv(glGetUniformLocation(lightingShaderProgram, "lighting" ),
+    glUniform3fv(glGetUniformLocation(lightingShaderProgram, "lighting"),
                                         1, glm::value_ptr(lighting));
-    glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "view" ),
+    glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "view"),
                                         1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "proj" ),
                                         1, GL_FALSE, glm::value_ptr(proj));
@@ -322,7 +322,7 @@ int main()
           glGenerateMipmap(GL_TEXTURE_2D);
 
           glUseProgram(lightingShaderProgram);
-          glUniform3fv(glGetUniformLocation(lightingShaderProgram, "lighting" ),
+          glUniform3fv(glGetUniformLocation(lightingShaderProgram, "lighting"),
                                         1, glm::value_ptr(lighting));
           glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "view"),
                   1, GL_FALSE, glm::value_ptr(view));

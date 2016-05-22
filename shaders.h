@@ -23,20 +23,6 @@
 "     gl_Position           = proj * view * model * vec4(position, 1.0);\n"\
 "}"
 
-#define SHADER_FRAG_PRETTY \
-"#version 330 core\n"\
-"in  vec2 Texcoord;\n"\
-"in  vec3 Position_world;\n"\
-"in  vec3 Normal;\n"\
-"in  vec3 EyeDir;\n"\
-"in  vec3 LightDir;\n"\
-"out vec3 outColor;\n"\
-"uniform sampler2D tex;\n"\
-"void main()"\
-"{"\
-"     outColor = texture(tex, Texcoord).xyz * vec3(Texcoord.x, Texcoord.y, 1.0);\n"\
-"}"
-
 #define SHADER_FRAG_SIMPLE \
 "#version 330 core\n"\
 "in  vec2 Texcoord;\n"\
