@@ -26,26 +26,14 @@
 #define STATIC_IMAGES
 
 float backdrop_vert[] = {
-//  Position             Texture
-     1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // Bottom Right
-     1.0f,  1.0f,  0.0f, 1.0f, 1.0f, // Top Right
-     0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // Top Left
+//  Position             Texture       Normal
+     1.0f, 0.0f, 0.0f,   1.0f, 0.0f,   0.0f, 0.0f, 1.0f, // Bottom Right
+     1.0f, 1.0f, 0.0f,   1.0f, 1.0f,   0.0f, 0.0f, 1.0f, // Top Right
+     0.0f, 1.0f, 0.0f,   0.0f, 1.0f,   0.0f, 0.0f, 1.0f,  // Top Left
      
-     1.0f,  0.0f,  0.0f, 1.0f, 0.0f, // Bottom Right
-     0.0f,  0.0f,  0.0f, 0.0f, 0.0f, // Bottom Left
-     0.0f,  1.0f,  0.0f, 0.0f, 1.0f, // Top Left
-};
-
-float axis_vertices[] = {
-// Position              Color
-     0.0f,  0.0f,  0.0f, 1.0f, 1.0f,  1.0f, // Origin
-     1.0f,  0.0f,  0.0f, 1.0f, 0.0f,  0.0f, // X Line
-    
-     0.0f,  0.0f,  0.0f, 1.0f, 1.0f,  1.0f, // Origin
-     0.0f,  1.0f,  0.0f, 0.0f, 1.0f,  0.0f, // Y Line
-    
-     0.0f,  0.0f,  0.0f, 1.0f, 1.0f,  1.0f, // Origin
-     0.0f,  0.0f,  1.0f, 0.0f, 0.0f,  1.0f, // Z Line
+     1.0f, 0.0f, 0.0f,   1.0f, 0.0f,   0.0f, 0.0f, 1.0f,  // Bottom Right
+     0.0f, 0.0f, 0.0f,   0.0f, 0.0f,   0.0f, 0.0f, 1.0f,  // Bottom Left
+     0.0f, 1.0f, 0.0f,   0.0f, 1.0f,   0.0f, 0.0f, 1.0f,  // Top Left
 };
 
 cv::Mat cameraFrame;
@@ -129,37 +117,23 @@ int main()
                                   backdrop_vert, GL_STATIC_DRAW);
     
     glBindVertexArray(0);
-    
-    // Create BG Vertex Array Object
-    GLuint bb_vao;
-    glGenVertexArrays(1, &bb_vao);
-    glBindVertexArray(bb_vao);
-
-    // Create BG Vertex Buffer Object
-    GLuint bb_vbo;
-    glGenBuffers(1, &bb_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, bb_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(backdrop_vert),
-                                  backdrop_vert, GL_STATIC_DRAW);
-    
-    glBindVertexArray(0);
    
     // Create Object Vertex Array Object
-    GLuint axis_vao;
-    glGenVertexArrays(1, &axis_vao);
-    glBindVertexArray(axis_vao);
+    GLuint obj_vao;
+    glGenVertexArrays(1, &obj_vao);
+    glBindVertexArray(obj_vao);
 
     // Create Object Vertex Buffer Object
-    GLuint axis_vbo;
-    glGenBuffers(1, &axis_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
+    GLuint obj_vbo;
+    glGenBuffers(1, &obj_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, obj_vbo);
     
-    vector<Vert<float, 8>> objVertices;
+    vector<Vert<float, 8>> obj_vertices;
     int obj_length;
-    loadOBJ("object.obj", objVertices);
-    glBufferData(GL_ARRAY_BUFFER, objVertices.size() * sizeof(Vert<float, 8>),
-                                  &objVertices[0], GL_STATIC_DRAW);
-    obj_length = objVertices.size();
+    loadOBJ("object.obj", obj_vertices);
+    glBufferData(GL_ARRAY_BUFFER, obj_vertices.size() * sizeof(Vert<float, 8>),
+                                  &obj_vertices[0], GL_STATIC_DRAW);
+    obj_length = obj_vertices.size();
 
     // Read object texutre
     int obj_tex_width, obj_tex_height;
@@ -167,91 +141,75 @@ int main()
       SOIL_load_image("tex.png", &obj_tex_width, &obj_tex_height, 0, SOIL_LOAD_RGB);
 
     // Make object shader program.
-    GLuint colorShaderProgram;
-    makeShader(SHADER_VERT3D, SHADER_FRAG_SIMPLE, colorShaderProgram);
+    GLuint lightingShaderProgram;
+    makeShader(SHADER_VERT3D, SHADER_FRAG_LIGHTING, lightingShaderProgram);
     
-    glBindVertexArray(axis_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, axis_vbo);
+    glBindVertexArray(obj_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, obj_vbo);
 
-    GLint cvpAttrib = glGetAttribLocation(colorShaderProgram, "position");
-    glEnableVertexAttribArray(cvpAttrib);
-    glVertexAttribPointer(cvpAttrib, 3, GL_FLOAT, GL_FALSE,
-                 8*sizeof(float), 0);
-
-    GLint cvcAttrib = glGetAttribLocation(colorShaderProgram, "texcoord");
-    glEnableVertexAttribArray(cvcAttrib);
-    glVertexAttribPointer(cvcAttrib, 2, GL_FLOAT, GL_FALSE,
-                 8*sizeof(float), (void*)(3*sizeof(float)));
-
-    GLint cvnAttrib = glGetAttribLocation(colorShaderProgram, "normal");
-    glEnableVertexAttribArray(cvnAttrib);
-    glVertexAttribPointer(cvnAttrib, 3, GL_FLOAT, GL_FALSE,
-                 8*sizeof(float), (void*)(5*sizeof(float)));
-    
-    // Make 'pretty' backdrop shader program.
-    GLuint prettyShaderProgram;
-    makeShader(SHADER_VERT3D, SHADER_FRAG_PRETTY, prettyShaderProgram);
-    
-    glBindVertexArray(bd_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, bd_vbo);
-
-    GLint pvpAttrib = glGetAttribLocation(prettyShaderProgram, "position");
+    GLint pvpAttrib = glGetAttribLocation(lightingShaderProgram, "position");
     glEnableVertexAttribArray(pvpAttrib);
     glVertexAttribPointer(pvpAttrib, 3, GL_FLOAT, GL_FALSE,
-               5*sizeof(float), 0);
+                 8*sizeof(float), 0);
 
-    GLint pvtAttrib = glGetAttribLocation(prettyShaderProgram, "texcoord");
-    glEnableVertexAttribArray(pvtAttrib);
-    glVertexAttribPointer(pvtAttrib, 2, GL_FLOAT, GL_FALSE,
-               5*sizeof(float), (void*)(3 * sizeof(float)));
+    GLint pvcAttrib = glGetAttribLocation(lightingShaderProgram, "texcoord");
+    glEnableVertexAttribArray(pvcAttrib);
+    glVertexAttribPointer(pvcAttrib, 2, GL_FLOAT, GL_FALSE,
+                 8*sizeof(float), (void*)(3*sizeof(float)));
 
-    // Make simple backdrop shader program.
+    GLint pvnAttrib = glGetAttribLocation(lightingShaderProgram, "normal");
+    glEnableVertexAttribArray(pvnAttrib);
+    glVertexAttribPointer(pvnAttrib, 3, GL_FLOAT, GL_FALSE,
+                 8*sizeof(float), (void*)(5*sizeof(float)));
+    
+    // Make simple shader program.
     GLuint blankShaderProgram;
     makeShader(SHADER_VERT3D, SHADER_FRAG_SIMPLE, blankShaderProgram);
 
-    glBindVertexArray(bb_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, bb_vbo);
+    glBindVertexArray(bd_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, bd_vbo);
 
     GLint bvpAttrib = glGetAttribLocation(blankShaderProgram, "position");
     glEnableVertexAttribArray(bvpAttrib);
     glVertexAttribPointer(bvpAttrib, 3, GL_FLOAT, GL_FALSE,
-               5*sizeof(float), 0);
+               8*sizeof(float), 0);
 
     GLint bvtAttrib = glGetAttribLocation(blankShaderProgram, "texcoord");
     glEnableVertexAttribArray(bvtAttrib);
     glVertexAttribPointer(bvtAttrib, 2, GL_FLOAT, GL_FALSE,
-               5*sizeof(float), (void*)(3 * sizeof(float)));
+               8*sizeof(float), (void*)(3*sizeof(float)));
+
+    GLint bvnAttrib = glGetAttribLocation(blankShaderProgram, "normal");
+    glEnableVertexAttribArray(bvnAttrib);
+    glVertexAttribPointer(bvnAttrib, 3, GL_FLOAT, GL_FALSE,
+               8*sizeof(float), (void*)(5*sizeof(float)));
 
     // Setup view
-    glm::mat4 view = glm::lookAt(
-                   glm::vec3( 0.5f,  2.0f,  0.5f),
-                   glm::vec3( 0.5f,  0.0f,  0.5f),
-                   glm::vec3( 0.0f,  0.0f,  1.0f)
-                   );
+    glm::vec3 lighting = glm::vec3( 0.5f, 2.0f, 2.0f);
+    glm::mat4 view     = glm::lookAt(
+                          glm::vec3( 0.5f,  2.0f,  0.5f),
+                          glm::vec3( 0.5f,  0.0f,  0.5f),
+                          glm::vec3( 0.0f,  0.0f,  1.0f)
+                        );
     glm::mat4 proj = 
           glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 1.0f, 10.0f);
     glm::mat4 model = glm::mat4();
 
-    glUniformMatrix4fv(glGetUniformLocation(colorShaderProgram, "view" ),
-                                            1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(colorShaderProgram, "proj" ),
-                                            1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(glGetUniformLocation(colorShaderProgram, "model"),
-                                            1, GL_FALSE, glm::value_ptr(model));
-
-    glUniformMatrix4fv(glGetUniformLocation(prettyShaderProgram, "view" ),
-                                            1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(glGetUniformLocation(prettyShaderProgram, "proj" ),
-                                            1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(glGetUniformLocation(prettyShaderProgram, "model"),
-                                            1, GL_FALSE, glm::value_ptr(model));
+    glUniform3fv(glGetUniformLocation(lightingShaderProgram, "lighting" ),
+                                        1, glm::value_ptr(lighting));
+    glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "view" ),
+                                        1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "proj" ),
+                                        1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "model"),
+                                        1, GL_FALSE, glm::value_ptr(model));
     
     glUniformMatrix4fv(glGetUniformLocation(blankShaderProgram, "view" ),
-                                            1, GL_FALSE, glm::value_ptr(view));
+                                        1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(blankShaderProgram, "proj" ),
-                                            1, GL_FALSE, glm::value_ptr(proj));
+                                        1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(glGetUniformLocation(blankShaderProgram, "model"),
-                                            1, GL_FALSE, glm::value_ptr(model));
+                                        1, GL_FALSE, glm::value_ptr(model));
 
     // Create texture
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -316,11 +274,11 @@ int main()
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glUseProgram(blankShaderProgram);
-        glUniformMatrix4fv(glGetUniformLocation(prettyShaderProgram, "view"),
+        glUniformMatrix4fv(glGetUniformLocation(blankShaderProgram, "view"),
           1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(prettyShaderProgram, "proj"),
+        glUniformMatrix4fv(glGetUniformLocation(blankShaderProgram, "proj"),
           1, GL_FALSE, glm::value_ptr(proj));
-        glUniformMatrix4fv(glGetUniformLocation(prettyShaderProgram, "model"),
+        glUniformMatrix4fv(glGetUniformLocation(blankShaderProgram, "model"),
           1, GL_FALSE, glm::value_ptr(model));
 
         glBindVertexArray(bd_vao);
@@ -347,7 +305,7 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(blankShaderProgram, "model"),
           1, GL_FALSE, glm::value_ptr(model));
 
-        glBindVertexArray(bb_vao);
+        glBindVertexArray(bd_vao);
           glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
 
@@ -363,15 +321,17 @@ int main()
                         GL_UNSIGNED_BYTE, obj_texture);
           glGenerateMipmap(GL_TEXTURE_2D);
 
-          glUseProgram(colorShaderProgram);
-          glUniformMatrix4fv(glGetUniformLocation(colorShaderProgram, "view"),
+          glUseProgram(lightingShaderProgram);
+          glUniform3fv(glGetUniformLocation(lightingShaderProgram, "lighting" ),
+                                        1, glm::value_ptr(lighting));
+          glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "view"),
                   1, GL_FALSE, glm::value_ptr(view));
-          glUniformMatrix4fv(glGetUniformLocation(colorShaderProgram, "proj"),
+          glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "proj"),
                   1, GL_FALSE, glm::value_ptr(proj));
-          glUniformMatrix4fv(glGetUniformLocation(colorShaderProgram, "model"),
+          glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "model"),
                   1, GL_FALSE, glm::value_ptr(model));
 
-          glBindVertexArray(axis_vao);
+          glBindVertexArray(obj_vao);
             glDrawArrays(GL_TRIANGLES, 0, obj_length);
           glBindVertexArray(0);
         }
@@ -382,17 +342,14 @@ int main()
     }
 
     // --- Cleanup/Shutdown ---
-    glDeleteProgram(colorShaderProgram);
-    glDeleteProgram(prettyShaderProgram);
+    glDeleteProgram(lightingShaderProgram);
     glDeleteProgram(blankShaderProgram);
     
-    glDeleteBuffers(1, &axis_vbo);
+    glDeleteBuffers(1, &obj_vbo);
     glDeleteBuffers(1, &bd_vbo);
-    glDeleteBuffers(1, &bb_vbo);
 
-    glDeleteVertexArrays(1, &axis_vao);
+    glDeleteVertexArrays(1, &obj_vao);
     glDeleteVertexArrays(1, &bd_vao);
-    glDeleteVertexArrays(1, &bb_vao);
 
     glfwDestroyWindow(window);
     glfwTerminate();
