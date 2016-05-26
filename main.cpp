@@ -25,6 +25,9 @@
 
 #define STATIC_IMAGES
 
+#define WIDTH 1024
+#define HEIGHT 768
+
 float backdrop_vert[] = {
 //  Position             Texture       Normal
      1.0f, 0.0f, 0.0f,   1.0f, 0.0f,   0.0f, 0.0f, 1.0f, // Bottom Right
@@ -52,7 +55,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	(
 		filename,
 		SOIL_SAVE_TYPE_BMP,
-		0, 0, 1024, 768
+		0, 0, WIDTH, HEIGHT
 	);
       }
     #ifdef STATIC_IMAGES
@@ -91,7 +94,7 @@ int main()
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
     // --- Create window ---
-    GLFWwindow* window = glfwCreateWindow(1024, 768,
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT,
                                       "OpenGL", nullptr, nullptr); // Windowed
     if(window == NULL) return 2;
     glfwMakeContextCurrent(window);
@@ -104,12 +107,12 @@ int main()
     // --- Application Specific Setup ---
     
     
-    // Create FG Vertex Array Object
+    // Create FG Vertex Array
     GLuint bd_vao;
     glGenVertexArrays(1, &bd_vao);
     glBindVertexArray(bd_vao);
     
-    // Create FG Vertex Buffer Object
+    // Create FG Vertex Buffer
     GLuint bd_vbo;
     glGenBuffers(1, &bd_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, bd_vbo);
@@ -118,34 +121,48 @@ int main()
     
     glBindVertexArray(0);
    
-    // Create Object Vertex Array Object
-    GLuint obj_vao;
-    glGenVertexArrays(1, &obj_vao);
-    glBindVertexArray(obj_vao);
-
-    // Create Object Vertex Buffer Object
-    GLuint obj_vbo;
-    glGenBuffers(1, &obj_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, obj_vbo);
     
     vector<Vert<float, 8>> obj_vertices;
-    int obj_length;
-    loadOBJ("object.obj", obj_vertices);
+    int obj_lengths[2];
+    // Create Object Vertex Arrays
+    GLuint obj_vaos[2];
+    glGenVertexArrays(sizeof(obj_vaos)/sizeof(GLuint), obj_vaos);
+
+    GLuint obj_vbos[2];
+    glGenBuffers(sizeof(obj_vbos)/sizeof(GLuint), obj_vbos);
+
+    // Create Object 0 Vertex Buffer
+    glBindVertexArray(obj_vaos[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[0]);
+    
+    loadOBJ("bb8.obj", obj_vertices);
     glBufferData(GL_ARRAY_BUFFER, obj_vertices.size() * sizeof(Vert<float, 8>),
                                   &obj_vertices[0], GL_STATIC_DRAW);
-    obj_length = obj_vertices.size();
+    obj_lengths[0] = obj_vertices.size();
 
-    // Read object texutre
+    // Read Object 0 texture
     int obj_tex_width, obj_tex_height;
     unsigned char* obj_texture =
       SOIL_load_image("tex.png", &obj_tex_width, &obj_tex_height, 0, SOIL_LOAD_RGB);
 
-    // Make object shader program.
+
+    obj_vertices.clear();
+    // Create Object 1 Vertex Buffer
+    glBindVertexArray(obj_vaos[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[1]);
+    
+    int obj_length;
+    loadOBJ("h2g2coin.obj", obj_vertices);
+    glBufferData(GL_ARRAY_BUFFER, obj_vertices.size() * sizeof(Vert<float, 8>),
+                                  &obj_vertices[0], GL_STATIC_DRAW);
+    obj_lengths[1] = obj_vertices.size();
+
+    // Make Object 0 shader program.
     GLuint lightingShaderProgram;
     makeShader(SHADER_VERT3D, SHADER_FRAG_LIGHTING, lightingShaderProgram);
     
-    glBindVertexArray(obj_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, obj_vbo);
+    glBindVertexArray(obj_vaos[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[0]);
 
     GLint pvpAttrib = glGetAttribLocation(lightingShaderProgram, "position");
     glEnableVertexAttribArray(pvpAttrib);
@@ -158,6 +175,22 @@ int main()
                  8*sizeof(float), (void*)(3*sizeof(float)));
 
     GLint pvnAttrib = glGetAttribLocation(lightingShaderProgram, "normal");
+    glEnableVertexAttribArray(pvnAttrib);
+    glVertexAttribPointer(pvnAttrib, 3, GL_FLOAT, GL_FALSE,
+                 8*sizeof(float), (void*)(5*sizeof(float)));
+    
+    // Make Object 1 shader program.
+    glBindVertexArray(obj_vaos[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, obj_vbos[1]);
+
+    glEnableVertexAttribArray(pvpAttrib);
+    glVertexAttribPointer(pvpAttrib, 3, GL_FLOAT, GL_FALSE,
+                 8*sizeof(float), 0);
+
+    glEnableVertexAttribArray(pvcAttrib);
+    glVertexAttribPointer(pvcAttrib, 2, GL_FLOAT, GL_FALSE,
+                 8*sizeof(float), (void*)(3*sizeof(float)));
+
     glEnableVertexAttribArray(pvnAttrib);
     glVertexAttribPointer(pvnAttrib, 3, GL_FLOAT, GL_FALSE,
                  8*sizeof(float), (void*)(5*sizeof(float)));
@@ -192,7 +225,7 @@ int main()
                           glm::vec3( 0.0f,  0.0f,  1.0f)
                         );
     glm::mat4 proj = 
-          glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 1.0f, 10.0f);
+          glm::perspective(glm::radians(45.0f), (float)WIDTH / HEIGHT, 1.0f, 10.0f);
     glm::mat4 model = glm::mat4();
 
     glUniform3fv(glGetUniformLocation(lightingShaderProgram, "lighting"),
@@ -258,11 +291,11 @@ int main()
         vector<vector<float>> poses;
 
         // Find objects and estimate poses.
-        findObjects(processedFrame, poses, 0);
+        findObjects(processedFrame, poses);
         cerr << frame_num <<"--------" << endl;
         for(int i = 0; i < poses.size(); i++) {
-          cerr << i << ":" << poses[i][0] << ", \t" << poses[i][1] << endl;
-          cerr <<     "  " << poses[i][2] << ", \t" << poses[i][3] << endl;
+          cerr << i << "-" << poses[i][0] << ":" << poses[i][1] << ", \t" << poses[i][2] << endl;
+          cerr <<  "   "                         << poses[i][3] << ", \t" << poses[i][4] << endl;
         }
 
         // Draw Baseboard
@@ -312,12 +345,12 @@ int main()
         // Draw Objects
         for(int i = 0; i < poses.size(); i++) {
           model = glm::mat4();
-          model = glm::translate(model, glm::vec3(poses[i][0], poses[i][1], 0.0f));
-          model = glm::rotate(model, poses[i][2], glm::vec3(0.0f, 0.0f, 1.0f));
-          model = glm::scale(model, glm::vec3(poses[i][3]));
+          model = glm::translate(model, glm::vec3(poses[i][1], poses[i][2], 0.0f));
+          model = glm::rotate(model, poses[i][3], glm::vec3(0.0f, 0.0f, 1.0f));
+          model = glm::scale(model, glm::vec3(poses[i][4]));
 
           glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
-                        obj_tex_width, obj_tex_height, 0, GL_BGR,
+                        obj_tex_width, obj_tex_height, 0, GL_RGB,
                         GL_UNSIGNED_BYTE, obj_texture);
           glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -331,8 +364,10 @@ int main()
           glUniformMatrix4fv(glGetUniformLocation(lightingShaderProgram, "model"),
                   1, GL_FALSE, glm::value_ptr(model));
 
-          glBindVertexArray(obj_vao);
-            glDrawArrays(GL_TRIANGLES, 0, obj_length);
+          int obj_num = poses[i][0];
+          if(obj_num == 2) continue;
+          glBindVertexArray(obj_vaos[obj_num]);
+            glDrawArrays(GL_TRIANGLES, 0, obj_lengths[obj_num]);
           glBindVertexArray(0);
         }
         
@@ -345,10 +380,10 @@ int main()
     glDeleteProgram(lightingShaderProgram);
     glDeleteProgram(blankShaderProgram);
     
-    glDeleteBuffers(1, &obj_vbo);
+    glDeleteBuffers(sizeof(obj_vbos)/sizeof(GLuint), obj_vbos);
     glDeleteBuffers(1, &bd_vbo);
 
-    glDeleteVertexArrays(1, &obj_vao);
+    glDeleteVertexArrays(sizeof(obj_vaos)/sizeof(GLuint), obj_vaos);
     glDeleteVertexArrays(1, &bd_vao);
 
     glfwDestroyWindow(window);

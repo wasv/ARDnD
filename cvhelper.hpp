@@ -30,10 +30,10 @@ static void applyFilter(const Mat& src, Mat& filter, const int filterNum) {
         inRange(hsv, Scalar( 90,  32,  0), Scalar(120, 192, 255), filter); // Detects Cyan
         break;
       case 1:
-        inRange(hsv, Scalar( 30,  64,  0), Scalar( 50, 192, 255), filter); // Detects Yellow
+        inRange(hsv, Scalar( 30,  64,  0), Scalar( 60, 192, 255), filter); // Detects Yellow
         break;
       case 2:
-        inRange(hsv, Scalar(160, 127,  0), Scalar(180, 255, 255), filter); // Detects Pink
+        inRange(hsv, Scalar(150, 127,  0), Scalar(180, 255, 255), filter); // Detects Pink
         break;
     }
 }
@@ -146,38 +146,33 @@ static void drawCenters( Mat& image, const vector<vector<Point>>& anchors, Scala
     }
 }
 
-static void findObjects(Mat& image, vector<vector<float>>& poses, const int filterNum) {
-    Scalar color;
-    vector<vector<Point>> anchors;
-    switch(filterNum) {
-      case 0:
-        color = Scalar(255,0,0);
-        break;
-      case 1:
-        color = Scalar(0,255,0);
-        break;
-      case 2:
-        color = Scalar(0,0,255);
-        break;
-    }
+static void findObjects(Mat& image, vector<vector<float>>& poses) {
+  vector<Scalar> colors;
+  vector<vector<Point>> anchors;
+  colors.push_back(Scalar(255,0,0));
+  colors.push_back(Scalar(0,255,0));
+  colors.push_back(Scalar(0,0,255));
 
+
+  poses.clear();
+  for(int fNum = 0; fNum < 3; fNum++) {
     Mat filter;
     vector<vector<Point>> squares;
 
-    applyFilter(image, filter, filterNum);   
- 
+    applyFilter(image, filter, fNum);   
     findSquares(filter, squares);
     findAnchors(squares, anchors);
-    drawSquares(image, squares, color);
-    drawCenters(image, anchors, color);
+    drawSquares(image, squares, colors[fNum]);
+    drawCenters(image, anchors, colors[fNum]);
 
-    poses = vector<vector<float>>(anchors.size());
     for(int i = 0; i < anchors.size(); i++) {
       float dx, dy;
-      poses[i].reserve(4);
+      vector<float> pose;
+      pose.resize(5);
 
-      poses[i].push_back((float)anchors[i][0].x / image.cols);
-      poses[i].push_back((float)anchors[i][0].y / image.rows);
+      pose[0] = (float)fNum;
+      pose[1] = (float)anchors[i][0].x / image.cols;
+      pose[2] = (float)anchors[i][0].y / image.rows;
 
       if(anchors[i][1].y > anchors[i][2].y) {
         dx = (anchors[i][1].x - anchors[i][0].x);
@@ -187,7 +182,9 @@ static void findObjects(Mat& image, vector<vector<float>>& poses, const int filt
         dy = (anchors[i][2].y - anchors[i][0].y);
       }
 
-      poses[i].push_back(-atan(dx/dy));
-      poses[i].push_back(1.5*(dy/image.rows));
+      pose[3] = -atan(dx/dy);
+      pose[4] = 1.5*(dy/image.rows);
+      poses.push_back(pose);
     }
+  }
 }

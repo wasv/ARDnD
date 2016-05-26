@@ -18,7 +18,8 @@ add_custom_command(TARGET samples PRE_BUILD
                     "${PROJECT_SOURCE_DIR}/samples"
                     "${PROJECT_BINARY_DIR}/$<CONFIGURATION>/samples")
 
-configure_file("bb8.obj" "Debug/object.obj" COPYONLY)
+configure_file("bb8.obj" "Debug/bb8.obj" COPYONLY)
+configure_file("h2g2coin.obj" "Debug/h2g2coin.obj" COPYONLY)
 configure_file("bb8.png" "Debug/tex.png" COPYONLY)
 configure_file("${DEP_ROOT_DIR}/bin/opencv_core310d.dll" "Debug/opencv_core310d.dll" COPYONLY)
 configure_file("${DEP_ROOT_DIR}/bin/opencv_imgproc310d.dll" "Debug/opencv_imgproc310d.dll" COPYONLY)
